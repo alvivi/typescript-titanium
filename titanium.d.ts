@@ -1,3 +1,9 @@
+/*
+   Typescript Titanium - 2.1.3
+   Typescipt-Titanium may be freely distributed under the MIT license.
+   This source code was auto-generated (Tue Oct 09 2012 11:01:33 GMT+0200 (CEST)}}).
+   More information at https://github.com/alvivi/typescript-titanium.
+ */
 declare interface TitaniumXMLEntityStatic {
     ATTRIBUTE_NODE : number;
     CDATA_SECTION_NODE : number;

@@ -1,9 +1,12 @@
+/*
+   Typescipt Titanium 0.8.1
+   (c) 2012 Álvaro Vilanova Vidal
+   Typescipt-Titanium may be freely distributed under the MIT license.
+ */
+
 /// <reference path="ambient/underscore.d.ts" />
 /// <reference path="ambient/underscore.string.d.ts" />
 /// <reference path="ambient/node.d.ts" />
-
-/// <reference path="titanium.d.ts" />
-
 
 import fs = module("fs");
 import  _ = module("underscore");
@@ -13,6 +16,13 @@ var excludeGlobalTypes = [
     "clearInterval", "clearTimeout", "decodeURIComponent", "encodeURIComponent",
     "require", "setInterval", "setTimeout"
 ];
+
+var info = _.template("/*\n" +
+                      "   Typescript Titanium - <%= version %>\n" +
+                      "   Typescipt-Titanium may be freely distributed under the MIT license.\n" +
+                      "   This source code was auto-generated (<%= date %>}}).\n" +
+                      "   More information at https://github.com/alvivi/typescript-titanium.\n" +
+                      " */\n");
 
 interface JSCAProperty {
     name : string;
@@ -48,18 +58,18 @@ interface JSCAAlias {
 }
 
 class Type {
+    public parent         : Type = null;
+    public staticTypename : string = null;
+    private subtypes   : any = {};
+    private properties : any = {};
+    private functions  : any = {};
+
     constructor (public name : string, parent? : Type) {
         if (!_.isUndefined(parent)) {
             this.parent = parent;
         }
         this.staticTypename = Type.computeStaticTypename(this.getContext());
     }
-
-    public parent         : Type = null;
-    public staticTypename : string = null;
-    private subtypes   : any = {};
-    private properties : any = {};
-    private functions  : any = {};
 
     static createFromJSCA (base : Type, type : JSCAType) : void {
         var context = type.name.split(".");
@@ -98,39 +108,16 @@ class Type {
         this.subtypes.name = type;
     }
 
-    private getContext () : string[] {
-        var context = [];
-        var current = this;
-        while (!_.isNull(current.parent)) {
-            context.push(current.name);
-            current = current.parent;
-        }
-        return context;
-    }
-
-    private getSubtypeFromName (name : string) : Type {
-        if (_.isUndefined(this.subtypes[name])) {
-            this.subtypes[name] = new Type(name, this);
-        }
-        if (!_.isUndefined(this.properties[name])) {
-            delete this.properties[name];
-        }
-        return this.subtypes[name];
-    }
-
-    private getSubtypeFromContext (context : string[]) : Type {
-        if (context.length == 0) {
-            return this;
-        }
-        else {
-            var base = this.getSubtypeFromName(_.head(context));
-            if (context.length == 1) {
-                return base;
-            }
-            else {
-                return base.getSubtypeFromContext(_.tail(context));
-            }
-        }
+    render () : string {
+        var vars = "";
+        var defs = "";
+        var props = this.renderProperties();
+        var funcs = this.renderFunctions();
+        _.each(this.subtypes, (type : Type, name : string) => {
+            vars += "declare var " + name + " : " + type.staticTypename + ";\n"
+            defs += type.renderInterface();
+        });
+        return defs + vars + props + funcs;
     }
 
     static private computeStaticTypename (context : string[]) : string {
@@ -196,6 +183,41 @@ class Type {
         return vararg + name + required + " : " + type + varargext;
     }
 
+    private getContext () : string[] {
+        var context = [];
+        var current = this;
+        while (!_.isNull(current.parent)) {
+            context.push(current.name);
+            current = current.parent;
+        }
+        return context;
+    }
+
+    private getSubtypeFromName (name : string) : Type {
+        if (_.isUndefined(this.subtypes[name])) {
+            this.subtypes[name] = new Type(name, this);
+        }
+        if (!_.isUndefined(this.properties[name])) {
+            delete this.properties[name];
+        }
+        return this.subtypes[name];
+    }
+
+    private getSubtypeFromContext (context : string[]) : Type {
+        if (context.length == 0) {
+            return this;
+        }
+        else {
+            var base = this.getSubtypeFromName(_.head(context));
+            if (context.length == 1) {
+                return base;
+            }
+            else {
+                return base.getSubtypeFromContext(_.tail(context));
+            }
+        }
+    }
+
     private computeProperties (type : JSCAType) {
         if (_.isArray(type.properties) && type.properties.length > 0) {
             _.each(type.properties, (p : JSCAProperty, name : string) {
@@ -224,18 +246,6 @@ class Type {
                 this.functions[f.name] = params + " : " + Type.computeReturnType(f.returnTypes);
             });
         }
-    }
-
-    public render () : string {
-        var vars = "";
-        var defs = "";
-        var props = this.renderProperties();
-        var funcs = this.renderFunctions();
-        _.each(this.subtypes, (type : Type, name : string) => {
-            vars += "declare var " + name + " : " + type.staticTypename + ";\n"
-            defs += type.renderInterface();
-        });
-        return defs + vars + props + funcs;
     }
 
     public renderInterface () : string {
@@ -297,7 +307,8 @@ class Alias {
     }
 }
 
-var path = process.argv[process.argv.length - 1];
+var path = process.argv[process.argv.length - 2];
+var ver  = process.argv[process.argv.length - 1];
 fs.readFile(path, (err, data) => {
     if (err) {
         console.error("Error opening file \"" + path + "\"");
@@ -319,7 +330,7 @@ fs.readFile(path, (err, data) => {
                     return m + (new Alias(a)).render();
                 }, "");
             }
-            console.log(global.render() + aliases);
+            console.log(info({version : ver, date : new Date()}) + global.render() + aliases);
         }
     }
 });
