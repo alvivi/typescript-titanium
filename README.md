@@ -12,7 +12,7 @@ Downloads
 
 * [Titanium Mobile - 2.1.3](https://github.com/downloads/alvivi/typescript-titanium/titanium-2.1.3.d.ts)
 * [Titanium Mobile - 2.0.2](https://github.com/downloads/alvivi/typescript-titanium/titanium-2.0.2.d.ts)
-* [Titanium Mobile - 1.8.2](https://github.com/downloads/alvivi/typescript-titanium/titanium-1.8.3.d.ts)
+* [Titanium Mobile - 1.8.2](https://github.com/downloads/alvivi/typescript-titanium/titanium-1.8.2.d.ts)
 
 Creating Your Own Ambient Declaration File
 ------------------------------------------
