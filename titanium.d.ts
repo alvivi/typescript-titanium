@@ -10923,4 +10923,5 @@ declare var CloudACLsCheckResponse : CloudACLsCheckResponseStatic;
 declare var CloudPushNotificationErrorArg : CloudPushNotificationErrorArgStatic;
 declare function L (key : string, hint? : string) : string;
 declare function alert (message : string) : void;
+declare var Ti : TitaniumStatic;
 

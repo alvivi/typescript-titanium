@@ -42,6 +42,11 @@ interface JSCAType {
     functions?  : JSCAFunction[];
 }
 
+interface JSCAAlias {
+    name : string;
+    type : string;
+}
+
 class Type {
     constructor (public name : string, parent? : Type) {
         if (!_.isUndefined(parent)) {
@@ -278,6 +283,20 @@ class Type {
     }
 }
 
+class Alias {
+    public name : string;
+    public type : string;
+
+    constructor (a : JSCAAlias) {
+        this.name = a.name;
+        this.type = Type.convertTypename(a.type);
+    }
+
+    public render () : string {
+        return "declare var " + this.name + " : " + this.type + ";\n";
+    }
+}
+
 var path = process.argv[process.argv.length - 1];
 fs.readFile(path, (err, data) => {
     if (err) {
@@ -293,7 +312,14 @@ fs.readFile(path, (err, data) => {
             _.each(jsca.types, (type : JSCAType) => {
                 Type.createFromJSCA(global, type);
             });
-            console.log(global.render());
+
+            var aliases = "";
+            if (_.isArray(jsca.aliases)) {
+                aliases = _.reduce(jsca.aliases, (m : string, a : JSCAAlias) => {
+                    return m + (new Alias(a)).render();
+                }, "");
+            }
+            console.log(global.render() + aliases);
         }
     }
 });
